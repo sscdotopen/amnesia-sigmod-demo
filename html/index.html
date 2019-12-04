@@ -1,11 +1,32 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <meta charset="utf-8">
+<meta charset="utf-8">
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<style>
+
+.num-interactions-cell {
+    float: left;
+    width: 40px;
+    height: 40px;
+}
+
+.cooccurrences-cell {
+    float: left;
+    width: 40px;
+    height: 40px;
+}
+
+.similarities-cell {
+    float: left;
+    width: 40px;
+    height: 40px;
+}
+
+</style>
 </head>
 <body>
-<pre id="messages"></pre>
-
 <button onclick="javascript:socket.send(initRequest);">Initialize</button>
 
 <form id="form">
@@ -13,22 +34,145 @@
     <input type="submit" value="Send">
 </form>
 
+<h3>Number of interactions per item</h3>
+
+<p>
+    \( \mathbf{n} = \sum_i \; \mathbf{H}_i \)
+</p>
+
+<div id="interactions_per_item">
+    <div style="clear: left;">
+        <div id="interactions_per_item_0" class="num-interactions-cell">0</div>
+        <div id="interactions_per_item_1" class="num-interactions-cell">0</div>
+        <div id="interactions_per_item_2" class="num-interactions-cell">0</div>
+        <div id="interactions_per_item_3" class="num-interactions-cell">0</div>
+    </div>
+</div>
+
+<br style="clear: left;"/>
+
+<h3>Item cooccurrence matrix</h3>
+
+<p>
+    \( \mathbf{C} = \; \mathbf{H}_i^\top \mathbf{H}_i \)
+</p>
+
+<div id="cooccurrences">
+    <div style="clear: left;">
+        <div id="cooccurrences_0_0" class="cooccurrences-cell">-</div>
+        <div id="cooccurrences_0_1" class="cooccurrences-cell">0</div>
+        <div id="cooccurrences_0_2" class="cooccurrences-cell">0</div>
+        <div id="cooccurrences_0_3" class="cooccurrences-cell">0</div>
+    </div>
+
+    <div style="clear: left;">
+        <div id="cooccurrences_1_0" class="cooccurrences-cell">0</div>
+        <div id="cooccurrences_1_1" class="cooccurrences-cell">-</div>
+        <div id="cooccurrences_1_2" class="cooccurrences-cell">0</div>
+        <div id="cooccurrences_1_3" class="cooccurrences-cell">0</div>
+    </div>
+
+    <div style="clear: left;">
+        <div id="cooccurrences_2_0" class="cooccurrences-cell">0</div>
+        <div id="cooccurrences_2_1" class="cooccurrences-cell">0</div>
+        <div id="cooccurrences_2_2" class="cooccurrences-cell">-</div>
+        <div id="cooccurrences_2_3" class="cooccurrences-cell">0</div>
+    </div>
+
+    <div style="clear: left;">
+        <div id="cooccurrences_3_0" class="cooccurrences-cell">0</div>
+        <div id="cooccurrences_3_1" class="cooccurrences-cell">0</div>
+        <div id="cooccurrences_3_2" class="cooccurrences-cell">0</div>
+        <div id="cooccurrences_3_3" class="cooccurrences-cell">-</div>
+    </div>
+</div>
+
+<br style="clear: left;"/>
+
+<h3>Item similarity matrix</h3>
+
+<p>
+    \( \mathbf{S} = \; [C_{ij} / (n_i + n_j - C_{ij})]_{ij} \)
+</p>
+
+<div id="similarities">
+
+    <div style="clear: left;">
+        <div id="similarities_0_0" class="similarities-cell">-</div>
+        <div id="similarities_0_1" class="similarities-cell">0.0</div>
+        <div id="similarities_0_2" class="similarities-cell">0.0</div>
+        <div id="similarities_0_3" class="similarities-cell">0.0</div>
+    </div>
+
+    <div style="clear: left;">
+        <div id="similarities_1_0" class="similarities-cell">0.0</div>
+        <div id="similarities_1_1" class="similarities-cell">-</div>
+        <div id="similarities_1_2" class="similarities-cell">0.0</div>
+        <div id="similarities_1_3" class="similarities-cell">0.0</div>
+    </div>
+
+    <div style="clear: left;">
+        <div id="similarities_2_0" class="similarities-cell">0.0</div>
+        <div id="similarities_2_1" class="similarities-cell">0.0</div>
+        <div id="similarities_2_2" class="similarities-cell">-</div>
+        <div id="similarities_2_3" class="similarities-cell">0.0</div>
+    </div>
+
+    <div style="clear: left;">
+        <div id="similarities_3_0" class="similarities-cell">0.0</div>
+        <div id="similarities_3_1" class="similarities-cell">0.0</div>
+        <div id="similarities_3_2" class="similarities-cell">0.0</div>
+        <div id="similarities_3_3" class="similarities-cell">-</div>
+    </div>
+</div>
+
+<br style="clear: left;"/>
+
+<h3>Change log</h3>
+
+<pre id="messages"></pre>
+
 <script>
 
 var initRequest = '{"change":"Add", "interactions":[[1,1], [1,2], [2,0], [2,1], [2,3], [3,1], [3,3]]}';
 
-        var socket = new WebSocket("ws://" + window.location.host + "/ws");
-        socket.onmessage = function (event) {
-          var messages = document.getElementById("messages");
-          messages.append(event.data + "\n");
-        };
-        var form = document.getElementById("form");
-        form.addEventListener('submit', function (event) {
-          event.preventDefault();
-          var input = document.getElementById("msg");
-          socket.send(input.value);
-          input.value = "";
-        });
-		</script>
+var socket = new WebSocket("ws://" + window.location.host + "/ws");
+socket.onmessage = function (event) {
+  var messages = document.getElementById("messages");
+  messages.append(event.data + "\n");
+
+  var change = JSON.parse(event.data);
+
+  if (change['data'] == 'item_interactions_n' && change['change'] == 1) {
+    var item = change['item'];
+    var count = change['count'];
+    document.getElementById("interactions_per_item_" + item).innerHTML = count;
+  }
+
+  if (change['data'] == 'cooccurrences_c' && change['change'] == 1) {
+    var item_a = change['item_a'];
+    var item_b = change['item_b'];
+    var count = change['num_cooccurrences'];
+    document.getElementById("cooccurrences_" + item_a + "_" + item_b).innerHTML = count;
+    document.getElementById("cooccurrences_" + item_b + "_" + item_a).innerHTML = count;
+  }
+
+  if (change['data'] == 'similarities_s' && change['change'] == 1) {
+    var item_a = change['item_a'];
+    var item_b = change['item_b'];
+    var similarity = change['similarity'];
+    document.getElementById("similarities_" + item_a + "_" + item_b).innerHTML = Number(similarity).toFixed(2);
+    document.getElementById("similarities_" + item_b + "_" + item_a).innerHTML = Number(similarity).toFixed(2);
+  }
+
+};
+var form = document.getElementById("form");
+form.addEventListener('submit', function (event) {
+  event.preventDefault();
+  var input = document.getElementById("msg");
+  socket.send(input.value);
+  input.value = "";
+});
+</script>
 </body>
 </html>
