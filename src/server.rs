@@ -16,23 +16,26 @@ use std::fs::File;
 use std::io::Read;
 
 use std::cell::RefCell;
-use std::sync::Arc;
 use std::rc::Rc;
+use std::fmt::Debug;
 
 use serde_json::json;
 use serde_json::Result as SerdeResult;
 
 use crate::requests::{Change, ChangeRequest};
 
+type Trace<K, V> = TraceAgent<Spine<K, V, usize, isize, Rc<OrdValBatch<K, V, usize, isize>>>>;
+type SharedTrace<K, V> = Rc<RefCell<Trace<K, V>>>;
+
 pub struct Server {
     pub current_step: usize,
     pub out: Sender,
-    pub worker: Arc<RefCell<Worker<Thread>>>,
-    pub input: Arc<RefCell<InputSession<usize, (u32, u32), isize>>>,
-    pub probe: Arc<RefCell<ProbeHandle<usize>>>,
-    pub shared_num_interactions_per_item_trace: Arc<RefCell<TraceAgent<Spine<u32, isize, usize, isize, Rc<OrdValBatch<u32, isize, usize, isize>>>>>>,
-    pub shared_cooccurrences_trace: Arc<RefCell<TraceAgent<Spine<(u32, u32), isize, usize, isize, Rc<OrdValBatch<(u32, u32), isize, usize, isize>>>>>>,
-    pub shared_similarities_trace: Arc<RefCell<TraceAgent<Spine<(u32, u32), String, usize, isize, Rc<OrdValBatch<(u32, u32), String, usize, isize>>>>>>,
+    pub worker: Rc<RefCell<Worker<Thread>>>,
+    pub input: Rc<RefCell<InputSession<usize, (u32, u32), isize>>>,
+    pub probe: Rc<RefCell<ProbeHandle<usize>>>,
+    pub shared_num_interactions_per_item_trace: SharedTrace<u32, isize>,
+    pub shared_cooccurrences_trace: SharedTrace<(u32, u32), isize>,
+    pub shared_similarities_trace: SharedTrace<(u32, u32), String>,
 }
 
 fn read_index_html() -> Vec<u8> {
@@ -42,6 +45,79 @@ fn read_index_html() -> Vec<u8> {
     file.read_to_end(&mut data).expect("Unable to read file!");
 
     data
+}
+
+impl Server {
+
+    fn broadcast(&self, message: Message) {
+        self.out.broadcast(message).expect("Unable to send message");
+    }
+
+    fn last_update_time(&self) -> usize {
+        self.current_step - 1
+    }
+
+    fn broadcast_num_interactions_per_item_diffs(&self) {
+        collect_diffs(
+            Rc::clone(&self.shared_num_interactions_per_item_trace),
+            self.last_update_time(),
+            |item, count, time, change| {
+
+                let json = json!({
+                            "data": "item_interactions_n",
+                            "item": item,
+                            "count": count,
+                            "time": time,
+                            "change": change
+                        });
+
+                Message::text(json.to_string())
+            })
+            .into_iter()
+            .for_each(|message| self.broadcast(message));
+    }
+
+    fn broadcast_cooccurrences_diffs(&self) {
+        collect_diffs(
+            Rc::clone(&self.shared_cooccurrences_trace),
+            self.last_update_time(),
+            |(item_a, item_b), num_cooccurrences, time, change| {
+
+                let json = json!({
+                            "data": "cooccurrences_c",
+                            "item_a": item_a,
+                            "item_b": item_b,
+                            "num_cooccurrences": num_cooccurrences,
+                            "time": time,
+                            "change": change
+                        });
+
+                Message::text(json.to_string())
+            })
+            .into_iter()
+            .for_each(|message| self.broadcast(message));
+    }
+
+    fn broadcast_similarities_diffs(&self) {
+        collect_diffs(
+            Rc::clone(&self.shared_similarities_trace),
+            self.last_update_time(),
+            |(item_a, item_b), similarity, time, change| {
+
+                let json = json!({
+                            "data": "similarities_s",
+                            "item_a": item_a,
+                            "item_b": item_b,
+                            "similarity": similarity.parse::<f64>().unwrap(),
+                            "time": time,
+                            "change": change
+                        });
+
+                Message::text(json.to_string())
+            })
+            .into_iter()
+            .for_each(|message| self.broadcast(message));
+    }
 }
 
 
@@ -77,84 +153,11 @@ impl Handler for Server {
                     self.probe.borrow_mut().less_than(interactions_input.time())
                 });
 
-                //TODO collect changes from traces...
-
                 println!("{:?}", request);
 
-                //let (mut cursor, storage) = self.trace.borrow_mut().cursor();
-
-                let num_interactions_per_item_messages = collect_diffs(
-                    Arc::clone(&self.shared_num_interactions_per_item_trace),
-                    self.current_step - 1,
-                    |key, value, time, change| {
-
-                        let json = json!({
-                            "data": "item_interactions_n",
-                            "item": key,
-                            "count": value,
-                            "time": time,
-                            "change": change
-                        });
-
-                        Message::text(json.to_string())
-                    });
-
-
-                for message in num_interactions_per_item_messages.iter() {
-                    // TODO remove clone maybe with drain or so
-                    self.out.broadcast(message.clone()).expect("Cannot send message");
-                }
-
-                let cooccurrence_messages = collect_diffs(
-                    Arc::clone(&self.shared_cooccurrences_trace),
-                    self.current_step - 1,
-                    |key, value, time, change| {
-
-                        let (item_a, item_b) = key;
-
-                        let json = json!({
-                            "data": "cooccurrences_c",
-                            "item_a": item_a,
-                            "item_b": item_b,
-                            "num_cooccurrences": value,
-                            "time": time,
-                            "change": change
-                        });
-
-                        Message::text(json.to_string())
-                    });
-
-
-                for message in cooccurrence_messages.iter() {
-                    // TODO remove clone maybe with drain or so
-                    self.out.broadcast(message.clone()).expect("Cannot send message");
-                }
-
-                let similarities_messages = collect_diffs(
-                    Arc::clone(&self.shared_similarities_trace),
-                    self.current_step - 1,
-                    |key, value, time, change| {
-
-                        let (item_a, item_b) = key;
-
-                        let json = json!({
-                            "data": "similarities_s",
-                            "item_a": item_a,
-                            "item_b": item_b,
-                            "similarity": value.parse::<f64>().unwrap(),
-                            "time": time,
-                            "change": change
-                        });
-
-                        Message::text(json.to_string())
-                    });
-
-
-                for message in similarities_messages.iter() {
-                    // TODO remove clone maybe with drain or so
-                    self.out.broadcast(message.clone()).expect("Cannot send message");
-                }
-
+                self.broadcast_num_interactions_per_item_diffs();
+                self.broadcast_cooccurrences_diffs();
+                self.broadcast_similarities_diffs();
             },
             Err(_) => println!("Error parsing request..."),
         }
@@ -171,19 +174,19 @@ impl Handler for Server {
     }
 }
 
-use std::fmt::Debug;
+
 
 
 fn collect_diffs<K, V, F>(
-    trace: Arc<RefCell<TraceAgent<Spine<K, V, usize, isize, Rc<OrdValBatch<K, V, usize, isize>>>>>>,
+    trace: SharedTrace<K, V>,
     time_of_interest: usize,
     logic: F,
 ) -> Vec<Message>
     where V: Clone + Ord + Debug,
           K: Clone + Ord + Debug,
-          F: Fn(&K, &V, usize, isize) -> Message +'static
+          F: Fn(&K, &V, usize, isize) -> Message + 'static
 {
-    // TODO dont like it that we have to buffer them
+    // TODO don't like it that we have to buffer the messages here...
     let mut messages = Vec::new();
 
     let (mut cursor, storage) = trace.borrow_mut().cursor();

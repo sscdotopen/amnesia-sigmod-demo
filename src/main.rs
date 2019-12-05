@@ -3,7 +3,7 @@ extern crate ws;
 extern crate amnesia_sigmod_demo;
 
 use std::cell::RefCell;
-use std::sync::Arc;
+use std::rc::Rc;
 
 use timely::communication::allocator::thread::Thread;
 use timely::worker::Worker;
@@ -20,14 +20,14 @@ use differential_dataflow::operators::{CountTotal,Count};
 
 fn main() {
     let alloc = Thread::new();
-    let worker = Arc::new(RefCell::new(timely::worker::Worker::new(alloc)));
+    let worker = Rc::new(RefCell::new(timely::worker::Worker::new(alloc)));
 
-    demo(Arc::clone(&worker));
+    demo(Rc::clone(&worker));
 
     while worker.borrow_mut().step_or_park(None) { }
 }
 
-fn demo(worker: Arc<RefCell<Worker<Thread>>>) {
+fn demo(worker: Rc<RefCell<Worker<Thread>>>) {
 
     let mut interactions_input: InputSession<usize, (u32, u32), isize> = InputSession::new();
 
@@ -35,15 +35,12 @@ fn demo(worker: Arc<RefCell<Worker<Thread>>>) {
 
     let (num_interactions_per_item_trace, cooccurrences_trace,
         jaccard_similarities_trace)= worker.borrow_mut().dataflow(|scope| {
-        let interactions = interactions_input.to_collection(scope);
 
         let interactions = interactions_input.to_collection(scope);
 
         let num_interactions_per_item = interactions
             .map(|(_user, item)| item)
             .count_total();
-
-        let arranged_num_iteractions_per_item = num_interactions_per_item.arrange_by_key();
 
         let arranged_remaining_interactions = interactions.arrange_by_key();
 
@@ -92,23 +89,24 @@ fn demo(worker: Arc<RefCell<Worker<Thread>>>) {
             arranged_jaccard_similarities.trace)
     });
 
-    let input = Arc::new(RefCell::new(interactions_input));
-    let probe = Arc::new(RefCell::new(the_probe));
-    let shared_num_interactions_per_item_trace = Arc::new(RefCell::new(num_interactions_per_item_trace));
-    let shared_cooccurrences_trace = Arc::new(RefCell::new(cooccurrences_trace));
-    let shared_similarities_trace = Arc::new(RefCell::new(jaccard_similarities_trace));
+    let input = Rc::new(RefCell::new(interactions_input));
+    let probe = Rc::new(RefCell::new(the_probe));
+    let shared_num_interactions_per_item_trace =
+        Rc::new(RefCell::new(num_interactions_per_item_trace));
+    let shared_cooccurrences_trace = Rc::new(RefCell::new(cooccurrences_trace));
+    let shared_similarities_trace = Rc::new(RefCell::new(jaccard_similarities_trace));
 
     // Listen on an address and call the closure for each connection
     listen("127.0.0.1:8000", |out| {
         Server {
             current_step: 0,
             out,
-            worker: Arc::clone(&worker),
-            input: Arc::clone(&input),
-            probe: Arc::clone(&probe),
-            shared_num_interactions_per_item_trace: Arc::clone(&shared_num_interactions_per_item_trace),
-            shared_cooccurrences_trace: Arc::clone(&shared_cooccurrences_trace),
-            shared_similarities_trace: Arc::clone(&shared_similarities_trace)
+            worker: Rc::clone(&worker),
+            input: Rc::clone(&input),
+            probe: Rc::clone(&probe),
+            shared_num_interactions_per_item_trace: Rc::clone(&shared_num_interactions_per_item_trace),
+            shared_cooccurrences_trace: Rc::clone(&shared_cooccurrences_trace),
+            shared_similarities_trace: Rc::clone(&shared_similarities_trace)
         }
     }).unwrap();
 }
