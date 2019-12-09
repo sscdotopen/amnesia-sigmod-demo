@@ -38,10 +38,10 @@ pub struct Server {
     pub shared_similarities_trace: SharedTrace<(u32, u32), String>,
 }
 
-fn read_index_html() -> Vec<u8> {
+fn read_local(file: &str) -> Vec<u8> {
     let mut data = Vec::new();
 
-    let mut file = File::open("html/index.html").expect("Unable to read file!");
+    let mut file = File::open(file).expect("Unable to read file!");
     file.read_to_end(&mut data).expect("Unable to read file!");
 
     data
@@ -125,7 +125,11 @@ impl Handler for Server {
     // Handle messages received in the websocket (in this case, only on /ws)
     fn on_message(&mut self, msg: Message) -> Result<()> {
 
-        let parsed_request: SerdeResult<ChangeRequest> = serde_json::from_slice(&msg.into_data());
+        // We assume we always get valid utf-8
+        let message_as_string = &msg.into_text().unwrap();
+
+        let parsed_request: SerdeResult<ChangeRequest> =
+            serde_json::from_slice(&message_as_string.as_bytes());
 
         match parsed_request {
             Ok(request) => {
@@ -159,7 +163,7 @@ impl Handler for Server {
                 self.broadcast_cooccurrences_diffs();
                 self.broadcast_similarities_diffs();
             },
-            Err(_) => println!("Error parsing request..."),
+            Err(e) => println!("Error parsing request:\n{:?}\n\n{:?}\n", &message_as_string, e),
         }
 
         Ok(())
@@ -168,7 +172,9 @@ impl Handler for Server {
     fn on_request(&mut self, req: &Request) -> Result<(Response)> {
         match req.resource() {
             "/ws" => Response::from_request(req),
-            "/" => Ok(Response::new(200, "OK", read_index_html())),
+            "/style.css" => Ok(Response::new(200, "OK", read_local("html/style.css"))),
+            "/script.js" => Ok(Response::new(200, "OK", read_local("html/script.js"))),
+            "/" => Ok(Response::new(200, "OK", read_local("html/index.html"))),
             _ => Ok(Response::new(404, "Not Found", b"404 - Not Found".to_vec())),
         }
     }
