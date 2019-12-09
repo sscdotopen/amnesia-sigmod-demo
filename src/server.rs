@@ -23,6 +23,7 @@ use serde_json::json;
 use serde_json::Result as SerdeResult;
 
 use crate::requests::{Change, ChangeRequest};
+use std::cmp::Ordering;
 
 type Trace<K, V> = TraceAgent<Spine<K, V, usize, isize, Rc<OrdValBatch<K, V, usize, isize>>>>;
 type SharedTrace<K, V> = Rc<RefCell<Trace<K, V>>>;
@@ -47,6 +48,30 @@ fn read_local(file: &str) -> Vec<u8> {
     data
 }
 
+#[derive(Eq, PartialEq)]
+struct ChangeMessage {
+    pub change: isize,
+    pub message: Message,
+}
+
+impl ChangeMessage {
+    pub fn new(change: isize, message: Message) -> Self {
+        ChangeMessage { change, message }
+    }
+}
+
+impl PartialOrd for ChangeMessage {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.change.cmp(&other.change))
+    }
+}
+
+impl Ord for ChangeMessage {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.partial_cmp(&other).unwrap()
+    }
+}
+
 impl Server {
 
     fn broadcast(&self, message: Message) {
@@ -57,8 +82,14 @@ impl Server {
         self.current_step - 1
     }
 
+    fn broadcast_in_order(&self, mut changes: Vec<ChangeMessage>) {
+        changes.sort();
+        changes.into_iter()
+            .for_each(|change| self.broadcast(change.message));
+    }
+
     fn broadcast_num_interactions_per_item_diffs(&self) {
-        collect_diffs(
+        let changes = collect_diffs(
             Rc::clone(&self.shared_num_interactions_per_item_trace),
             self.last_update_time(),
             |item, count, time, change| {
@@ -71,14 +102,14 @@ impl Server {
                             "change": change
                         });
 
-                Message::text(json.to_string())
-            })
-            .into_iter()
-            .for_each(|message| self.broadcast(message));
+                ChangeMessage::new(change, Message::text(json.to_string()))
+            });
+
+        self.broadcast_in_order(changes);
     }
 
     fn broadcast_cooccurrences_diffs(&self) {
-        collect_diffs(
+        let changes = collect_diffs(
             Rc::clone(&self.shared_cooccurrences_trace),
             self.last_update_time(),
             |(item_a, item_b), num_cooccurrences, time, change| {
@@ -92,14 +123,14 @@ impl Server {
                             "change": change
                         });
 
-                Message::text(json.to_string())
-            })
-            .into_iter()
-            .for_each(|message| self.broadcast(message));
+                ChangeMessage::new(change, Message::text(json.to_string()))
+            });
+
+        self.broadcast_in_order(changes);
     }
 
     fn broadcast_similarities_diffs(&self) {
-        collect_diffs(
+        let changes = collect_diffs(
             Rc::clone(&self.shared_similarities_trace),
             self.last_update_time(),
             |(item_a, item_b), similarity, time, change| {
@@ -113,10 +144,10 @@ impl Server {
                             "change": change
                         });
 
-                Message::text(json.to_string())
-            })
-            .into_iter()
-            .for_each(|message| self.broadcast(message));
+                ChangeMessage::new(change, Message::text(json.to_string()))
+            });
+
+        self.broadcast_in_order(changes);
     }
 }
 
@@ -187,10 +218,10 @@ fn collect_diffs<K, V, F>(
     trace: SharedTrace<K, V>,
     time_of_interest: usize,
     logic: F,
-) -> Vec<Message>
+) -> Vec<ChangeMessage>
     where V: Clone + Ord + Debug,
           K: Clone + Ord + Debug,
-          F: Fn(&K, &V, usize, isize) -> Message + 'static
+          F: Fn(&K, &V, usize, isize) -> ChangeMessage + 'static
 {
     // TODO don't like it that we have to buffer the messages here...
     let mut messages = Vec::new();

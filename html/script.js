@@ -8,11 +8,26 @@ socket.onmessage = function (event) {
 
   var change = JSON.parse(event.data);
 
+  if (change['data'] == 'item_interactions_n' && change['change'] == -1) {
+    var item = change['item'];
+    var count = change['count'];
+    document.getElementById("interactions_per_item_" + item).innerHTML = "-";
+  }
+
   if (change['data'] == 'item_interactions_n' && change['change'] == 1) {
     var item = change['item'];
     var count = change['count'];
     document.getElementById("interactions_per_item_" + item).innerHTML = count;
   }
+
+  if (change['data'] == 'cooccurrences_c' && change['change'] == -1) {
+    var item_a = change['item_a'];
+    var item_b = change['item_b'];
+    var count = change['num_cooccurrences'];
+    document.getElementById("cooccurrences_" + item_a + "_" + item_b).innerHTML = "-";
+    document.getElementById("cooccurrences_" + item_b + "_" + item_a).innerHTML = "-";
+  }
+
 
   if (change['data'] == 'cooccurrences_c' && change['change'] == 1) {
     var item_a = change['item_a'];
@@ -20,6 +35,14 @@ socket.onmessage = function (event) {
     var count = change['num_cooccurrences'];
     document.getElementById("cooccurrences_" + item_a + "_" + item_b).innerHTML = count;
     document.getElementById("cooccurrences_" + item_b + "_" + item_a).innerHTML = count;
+  }
+
+  if (change['data'] == 'similarities_s' && change['change'] == -1) {
+    var item_a = change['item_a'];
+    var item_b = change['item_b'];
+    var similarity = change['similarity'];
+    document.getElementById("similarities_" + item_a + "_" + item_b).innerHTML = "-";
+    document.getElementById("similarities_" + item_b + "_" + item_a).innerHTML = "-";
   }
 
   if (change['data'] == 'similarities_s' && change['change'] == 1) {
