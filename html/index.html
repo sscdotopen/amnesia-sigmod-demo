@@ -6,6 +6,12 @@
 <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 <style>
 
+.interactions-cell {
+    float: left;
+    width: 40px;
+    height: 40px;
+}
+
 .num-interactions-cell {
     float: left;
     width: 40px;
@@ -27,12 +33,23 @@
 </style>
 </head>
 <body>
-<button onclick="javascript:socket.send(initRequest);">Initialize</button>
+<button onclick="javascript:initialise();">Initialize</button>
 
 <form id="form">
     <input type="text" id="msg">
     <input type="submit" value="Send">
 </form>
+
+<h3>History matrix</h3>
+
+<p>
+    \(\mathbf{H}\)
+</p>
+
+<div id="interactions">
+</div>
+
+<br style="clear: left;"/>
 
 <h3>Number of interactions per item</h3>
 
@@ -134,7 +151,57 @@
 
 <script>
 
-var initRequest = '{"change":"Add", "interactions":[[1,1], [1,2], [2,0], [2,1], [2,3], [3,1], [3,3]]}';
+function initialise() {
+    var initRequest = '{"change":"Add", "interactions":[[1,1], [1,2], [2,0], [2,1], [2,3], [3,1], [3,3]]}';
+    socket.send(initRequest);
+
+    addInteraction(1, 1);
+    addInteraction(1, 2);
+    addInteraction(2, 0);
+    addInteraction(2, 1);
+    addInteraction(2, 3);
+    addInteraction(3, 1);
+    addInteraction(3, 3);
+}
+
+function forget(user) {
+  var interactionsToRemove = [];
+  for (var item = 0; item < 4; item++) {
+    var isPresent = parseInt(document.getElementById(`interactions_${user}_${item}`).innerHTML);
+
+    if (isPresent == 1) {
+        interactionsToRemove.push([user, item])
+    }
+  }
+
+   var request = new Object();
+   request.change = "Remove";
+   request.interactions  = interactionsToRemove;
+   var jsonString = JSON.stringify(request);
+
+   alert(jsonString);
+   socket.send(jsonString);
+
+  var element = document.getElementById(`interactions_${user}`);
+  element.parentNode.removeChild(element);
+}
+
+function addInteraction(user, item) {
+    if (!document.getElementById("interactions_" + user + "_0")) {
+        var html = `
+            <div id="interactions_${user}" style="clear: left;">
+                <div id="interactions_${user}_0" class="interactions-cell">0</div>
+                <div id="interactions_${user}_1" class="interactions-cell">0</div>
+                <div id="interactions_${user}_2" class="interactions-cell">0</div>
+                <div id="interactions_${user}_3" class="interactions-cell">0</div>
+                <button onclick="javascript:forget(${user});">Forget</button>
+            </div>
+        `;
+        document.getElementById("interactions").innerHTML += html;
+    }
+
+    document.getElementById("interactions_" + user + "_" + item).innerHTML = 1;
+}
 
 var socket = new WebSocket("ws://" + window.location.host + "/ws");
 socket.onmessage = function (event) {
@@ -142,6 +209,25 @@ socket.onmessage = function (event) {
   messages.append(event.data + "\n");
 
   var change = JSON.parse(event.data);
+
+  if (change['data'] == 'interactions' && change['change'] == 1) {
+    var user = change['user'];
+    var item = change['item'];
+
+    if (!document.getElementById("interactions_" + user + "_0")) {
+        var html = `
+            <div style="clear: left;">
+                <div id="interactions_${user}_0" class="interactions-cell">0</div>
+                <div id="interactions_${user}_1" class="interactions-cell">0</div>
+                <div id="interactions_${user}_2" class="interactions-cell">0</div>
+                <div id="interactions_${user}_3" class="interactions-cell">0</div>
+            </div>
+        `;
+        document.getElementById("interactions").innerHTML += html;
+    }
+
+    document.getElementById("interactions_" + user + "_" + item).innerHTML = 1;
+  }
 
   if (change['data'] == 'item_interactions_n' && change['change'] == 1) {
     var item = change['item'];

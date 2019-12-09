@@ -30,8 +30,10 @@ fn main() {
 fn demo(worker: Rc<RefCell<Worker<Thread>>>) {
 
     let mut interactions_input: InputSession<usize, (u32, u32), isize> = InputSession::new();
+    let mut queries_input: InputSession<usize, (u32, u32), isize> = InputSession::new();
 
-    let mut the_probe = timely::dataflow::operators::probe::Handle::new();
+    let mut model_probe = timely::dataflow::operators::probe::Handle::new();
+    //let mut reco_probe = timely::dataflow::operators::probe::Handle::new();
 
     let (num_interactions_per_item_trace, cooccurrences_trace,
         jaccard_similarities_trace)= worker.borrow_mut().dataflow(|scope| {
@@ -83,14 +85,17 @@ fn demo(worker: Rc<RefCell<Worker<Thread>>>) {
 
         let arranged_jaccard_similarities = jaccard_similarities.arrange_by_key();
 
-        arranged_jaccard_similarities.stream.probe_with(&mut the_probe);
+        arranged_jaccard_similarities.stream.probe_with(&mut model_probe);
+
+
+
 
         (arranged_num_interactions_per_item.trace, arranged_cooccurrences.trace,
             arranged_jaccard_similarities.trace)
     });
 
     let input = Rc::new(RefCell::new(interactions_input));
-    let probe = Rc::new(RefCell::new(the_probe));
+    let probe = Rc::new(RefCell::new(model_probe));
     let shared_num_interactions_per_item_trace =
         Rc::new(RefCell::new(num_interactions_per_item_trace));
     let shared_cooccurrences_trace = Rc::new(RefCell::new(cooccurrences_trace));
