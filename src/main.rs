@@ -16,7 +16,7 @@ use amnesia_sigmod_demo::server::Server;
 use differential_dataflow::operators::arrange::ArrangeByKey;
 use timely::dataflow::operators::Probe;
 use differential_dataflow::operators::join::JoinCore;
-use differential_dataflow::operators::{CountTotal,Count};
+use differential_dataflow::operators::{CountTotal, Count, Consolidate};
 
 fn main() {
     let alloc = Thread::new();
@@ -40,7 +40,8 @@ fn demo(worker: Rc<RefCell<Worker<Thread>>>) {
 
         let num_interactions_per_item = interactions
             .map(|(_user, item)| item)
-            .count_total();
+            .count_total()
+            .consolidate();
 
         let arranged_remaining_interactions = interactions.arrange_by_key();
 
@@ -49,7 +50,8 @@ fn demo(worker: Rc<RefCell<Worker<Thread>>>) {
             .join_core(&arranged_remaining_interactions, |_user, &item_a, &item_b| {
                 if item_a > item_b { Some((item_a, item_b)) } else { None }
             })
-            .count();
+            .count()
+            .consolidate();
 
         let arranged_cooccurrences = cooccurrences.arrange_by_key();
 
@@ -79,7 +81,8 @@ fn demo(worker: Rc<RefCell<Worker<Thread>>>) {
             .map(|((item_a, item_b), (num_cooc, occ_a, occ_b))| {
                 let jaccard = num_cooc as f64 / (occ_a + occ_b - num_cooc) as f64;
                 ((item_a, item_b), jaccard.to_string())
-            });
+            })
+            .consolidate();
 
         let arranged_jaccard_similarities = jaccard_similarities.arrange_by_key();
 
