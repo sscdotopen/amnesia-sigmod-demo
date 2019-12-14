@@ -10,7 +10,7 @@ use differential_dataflow::trace::implementations::spine_fueled::Spine;
 use differential_dataflow::trace::implementations::ord::OrdValBatch;
 use timely::communication::allocator::thread::Thread;
 use timely::worker::Worker;
-use differential_dataflow::trace::{Cursor, TraceReader};
+use differential_dataflow::trace::{Cursor, TraceReader, BatchReader};
 
 use std::fs::File;
 use std::io::Read;
@@ -223,8 +223,36 @@ fn collect_diffs<K, V, F>(
           K: Clone + Ord + Debug,
           F: Fn(&K, &V, usize, isize) -> ChangeMessage + 'static
 {
-    // TODO don't like it that we have to buffer the messages here...
     let mut messages = Vec::new();
+
+//    let (_, storage) = trace.borrow_mut().cursor();
+//
+//    // We have a simple case where we only need to look at a single batch
+//    trace.borrow_mut().map_batches(|batch| {
+//        if batch.lower().iter().find(|t| *(*t) == time_of_interest) != None {
+//            println!("{:?}", batch.description());
+//
+//            let mut cursor = batch.cursor();
+//
+//
+//            while cursor.key_valid(&storage) {
+//                while cursor.val_valid(&storage) {
+//
+//                    let key = cursor.key(&storage);
+//                    let value = cursor.val(&storage);
+//
+//                    cursor.map_times(&storage, |time, diff| {
+//                        if *time == time_of_interest {
+//                            messages.push(logic(&key, &value, *time, *diff));
+//                        }
+//                    });
+//
+//                    cursor.step_val(&storage);
+//                }
+//                cursor.step_key(&storage);
+//            }
+//        }
+//    });
 
     let (mut cursor, storage) = trace.borrow_mut().cursor();
 

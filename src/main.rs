@@ -18,6 +18,9 @@ use timely::dataflow::operators::Probe;
 use differential_dataflow::operators::join::JoinCore;
 use differential_dataflow::operators::{CountTotal, Count, Consolidate};
 
+use timely::dataflow::operators::{Capture, ToStream, Inspect};
+use timely::dataflow::operators::capture::{EventLink, Replay, Extract};
+
 fn main() {
     let alloc = Thread::new();
     let worker = Rc::new(RefCell::new(timely::worker::Worker::new(alloc)));
@@ -36,12 +39,15 @@ fn demo(worker: Rc<RefCell<Worker<Thread>>>) {
     let (num_interactions_per_item_trace, cooccurrences_trace,
         jaccard_similarities_trace)= worker.borrow_mut().dataflow(|scope| {
 
+        let handle1 = Rc::new(EventLink::new());
+
         let interactions = interactions_input.to_collection(scope);
 
         let num_interactions_per_item = interactions
             .map(|(_user, item)| item)
-            .count_total()
-            .consolidate();
+            .count_total();
+
+        num_interactions_per_item.inner.capture_into(handle1);
 
         let arranged_remaining_interactions = interactions.arrange_by_key();
 
@@ -50,8 +56,7 @@ fn demo(worker: Rc<RefCell<Worker<Thread>>>) {
             .join_core(&arranged_remaining_interactions, |_user, &item_a, &item_b| {
                 if item_a > item_b { Some((item_a, item_b)) } else { None }
             })
-            .count()
-            .consolidate();
+            .count();
 
         let arranged_cooccurrences = cooccurrences.arrange_by_key();
 
@@ -81,8 +86,7 @@ fn demo(worker: Rc<RefCell<Worker<Thread>>>) {
             .map(|((item_a, item_b), (num_cooc, occ_a, occ_b))| {
                 let jaccard = num_cooc as f64 / (occ_a + occ_b - num_cooc) as f64;
                 ((item_a, item_b), jaccard.to_string())
-            })
-            .consolidate();
+            });
 
         let arranged_jaccard_similarities = jaccard_similarities.arrange_by_key();
 
