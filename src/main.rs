@@ -112,27 +112,27 @@ fn demo(worker: Rc<RefCell<Worker<Thread>>>) {
                 |_history_item, query, (other_item, similarity)| {
                     ((*query, *other_item), *similarity)
             })
-            .antijoin(&queries_by_item)
+            //.antijoin(&queries_by_item)
             .map(|((query, item), similarity)| (query, (item, similarity)))
-            .inspect(|x| println!("Before reduce ---> {:?}", x))
+            //.inspect(|x| println!("Before reduce ---> {:?}", x))
             .reduce(|_query, items_with_similarities, output| {
 
-                output.push(((*items_with_similarities[0].0).0, 1));
-//
-//                let mut similarities_per_item: HashMap<u32, isize> = HashMap::new();
-//
-//                for ((item, similarity), mult) in items_with_similarities.iter() {
-//                    *similarities_per_item.entry(*item).or_insert(0_isize) += (*similarity as isize) * *mult;
-//                }
-//
-//                let (recommended_item, _) = similarities_per_item
-//                    .iter()
-//                    .max_by(|(_, sim_a), (_, sim_b)| sim_a.cmp(sim_b))
-//                    .unwrap();
-//
-//                output.push((*recommended_item, 1_isize));
-            })
-            .inspect(|x| println!("After reduce ---> {:?}", x));
+                //output.push(((*items_with_similarities[0].0).0, 1));
+
+                let mut similarities_per_item: HashMap<u32, isize> = HashMap::new();
+
+                for ((item, similarity), mult) in items_with_similarities.iter() {
+                    *similarities_per_item.entry(*item).or_insert(0_isize) += (*similarity as isize) * *mult;
+                }
+
+                let (recommended_item, _) = similarities_per_item
+                    .iter()
+                    .max_by(|(_, sim_a), (_, sim_b)| sim_a.cmp(sim_b))
+                    .unwrap();
+
+                output.push((*recommended_item, 1_isize));
+            });
+            //.inspect(|x| println!("After reduce ---> {:?}", x));
 
             let arranged_recommendations = recommendations
                 .arrange_by_key();
