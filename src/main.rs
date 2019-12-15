@@ -16,10 +16,9 @@ use amnesia_sigmod_demo::server::Server;
 use differential_dataflow::operators::arrange::ArrangeByKey;
 use timely::dataflow::operators::Probe;
 use differential_dataflow::operators::join::JoinCore;
-use differential_dataflow::operators::{CountTotal, Count, Consolidate};
+use differential_dataflow::operators::{Join, CountTotal, Count, Reduce};
 
-use timely::dataflow::operators::{Capture, ToStream, Inspect};
-use timely::dataflow::operators::capture::{EventLink, Replay, Extract};
+use std::collections::HashMap;
 
 fn main() {
     let alloc = Thread::new();
@@ -33,21 +32,20 @@ fn main() {
 fn demo(worker: Rc<RefCell<Worker<Thread>>>) {
 
     let mut interactions_input: InputSession<usize, (u32, u32), isize> = InputSession::new();
+    let mut query_input: InputSession<usize, (u32, u32), isize> = InputSession::new();
 
     let mut the_probe = timely::dataflow::operators::probe::Handle::new();
+    let mut the_probe2 = timely::dataflow::operators::probe::Handle::new();
 
     let (num_interactions_per_item_trace, cooccurrences_trace,
-        jaccard_similarities_trace)= worker.borrow_mut().dataflow(|scope| {
-
-        let handle1 = Rc::new(EventLink::new());
+        jaccard_similarities_trace, recommendations_trace) =
+        worker.borrow_mut().dataflow(|scope| {
 
         let interactions = interactions_input.to_collection(scope);
 
         let num_interactions_per_item = interactions
             .map(|(_user, item)| item)
             .count_total();
-
-        num_interactions_per_item.inner.capture_into(handle1);
 
         let arranged_remaining_interactions = interactions.arrange_by_key();
 
@@ -92,16 +90,76 @@ fn demo(worker: Rc<RefCell<Worker<Thread>>>) {
 
         arranged_jaccard_similarities.stream.probe_with(&mut the_probe);
 
+        let queries = query_input.to_collection(scope);
+
+        let bidirectional_similarities = jaccard_similarities
+            .flat_map(|((item_a, item_b), similarity_str)| {
+                let similarity = similarity_str.parse::<f64>().unwrap();
+                let similarity2 = (similarity * 10000_f64) as u64;
+
+                vec![
+                    (item_a, (item_b, similarity2)),
+                    (item_b, (item_a, similarity2))
+                ]
+            });
+
+        let queries_by_item = queries
+            .map(|(query, item)| (item, query));
+
+        let recommendations = queries_by_item
+            .join_map(
+                &bidirectional_similarities,
+                |_history_item, query, (other_item, similarity)| {
+                    ((*query, *other_item), *similarity)
+            })
+            .antijoin(&queries_by_item)
+            .map(|((query, item), similarity)| (query, (item, similarity)))
+            .inspect(|x| println!("Before reduce ---> {:?}", x))
+            .reduce(|_query, items_with_similarities, output| {
+
+                output.push(((*items_with_similarities[0].0).0, 1));
+//
+//                let mut similarities_per_item: HashMap<u32, isize> = HashMap::new();
+//
+//                for ((item, similarity), mult) in items_with_similarities.iter() {
+//                    *similarities_per_item.entry(*item).or_insert(0_isize) += (*similarity as isize) * *mult;
+//                }
+//
+//                let (recommended_item, _) = similarities_per_item
+//                    .iter()
+//                    .max_by(|(_, sim_a), (_, sim_b)| sim_a.cmp(sim_b))
+//                    .unwrap();
+//
+//                output.push((*recommended_item, 1_isize));
+            })
+            .inspect(|x| println!("After reduce ---> {:?}", x));
+
+            let arranged_recommendations = recommendations
+                .arrange_by_key();
+
+             arranged_recommendations.stream.probe_with(&mut the_probe2);
+
+
         (arranged_num_interactions_per_item.trace, arranged_cooccurrences.trace,
-            arranged_jaccard_similarities.trace)
+            arranged_jaccard_similarities.trace, arranged_recommendations.trace)
     });
+
+    query_input.insert((40000, 0));
+    query_input.insert((40000, 1));
+    query_input.insert((50000, 3));
+    query_input.advance_to(1);
+    query_input.flush();
+    query_input.close();
+
 
     let input = Rc::new(RefCell::new(interactions_input));
     let probe = Rc::new(RefCell::new(the_probe));
+    let probe2 = Rc::new(RefCell::new(the_probe2));
     let shared_num_interactions_per_item_trace =
         Rc::new(RefCell::new(num_interactions_per_item_trace));
     let shared_cooccurrences_trace = Rc::new(RefCell::new(cooccurrences_trace));
     let shared_similarities_trace = Rc::new(RefCell::new(jaccard_similarities_trace));
+    let shared_recommendations_trace = Rc::new(RefCell::new(recommendations_trace));
 
     // Listen on an address and call the closure for each connection
     listen("127.0.0.1:8000", |out| {
@@ -111,9 +169,11 @@ fn demo(worker: Rc<RefCell<Worker<Thread>>>) {
             worker: Rc::clone(&worker),
             input: Rc::clone(&input),
             probe: Rc::clone(&probe),
+            probe2: Rc::clone(&probe2),
             shared_num_interactions_per_item_trace: Rc::clone(&shared_num_interactions_per_item_trace),
             shared_cooccurrences_trace: Rc::clone(&shared_cooccurrences_trace),
-            shared_similarities_trace: Rc::clone(&shared_similarities_trace)
+            shared_similarities_trace: Rc::clone(&shared_similarities_trace),
+            shared_recommendations_trace: Rc::clone(&shared_recommendations_trace),
         }
     }).unwrap();
 }

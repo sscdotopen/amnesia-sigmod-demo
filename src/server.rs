@@ -10,7 +10,7 @@ use differential_dataflow::trace::implementations::spine_fueled::Spine;
 use differential_dataflow::trace::implementations::ord::OrdValBatch;
 use timely::communication::allocator::thread::Thread;
 use timely::worker::Worker;
-use differential_dataflow::trace::{Cursor, TraceReader, BatchReader};
+use differential_dataflow::trace::{Cursor, TraceReader};
 
 use std::fs::File;
 use std::io::Read;
@@ -34,9 +34,11 @@ pub struct Server {
     pub worker: Rc<RefCell<Worker<Thread>>>,
     pub input: Rc<RefCell<InputSession<usize, (u32, u32), isize>>>,
     pub probe: Rc<RefCell<ProbeHandle<usize>>>,
+    pub probe2: Rc<RefCell<ProbeHandle<usize>>>,
     pub shared_num_interactions_per_item_trace: SharedTrace<u32, isize>,
     pub shared_cooccurrences_trace: SharedTrace<(u32, u32), isize>,
     pub shared_similarities_trace: SharedTrace<(u32, u32), String>,
+    pub shared_recommendations_trace : SharedTrace<u32, u32>,
 }
 
 fn read_local(file: &str) -> Vec<u8> {
@@ -149,6 +151,26 @@ impl Server {
 
         self.broadcast_in_order(changes);
     }
+
+    fn broadcast_recommendation_diffs(&self) {
+        let changes = collect_diffs(
+            Rc::clone(&self.shared_recommendations_trace),
+            self.last_update_time(),
+            |query, item, time, change| {
+
+                let json = json!({
+                            "data": "recommendations",
+                            "query": query,
+                            "item": item,
+                            "time": time,
+                            "change": change
+                        });
+
+                ChangeMessage::new(change, Message::text(json.to_string()))
+            });
+
+        self.broadcast_in_order(changes);
+    }
 }
 
 
@@ -185,7 +207,8 @@ impl Handler for Server {
                 interactions_input.flush();
 
                 self.worker.borrow_mut().step_while(|| {
-                    self.probe.borrow_mut().less_than(interactions_input.time())
+                    self.probe.borrow_mut().less_than(interactions_input.time()) &&
+                    self.probe2.borrow_mut().less_than(interactions_input.time())
                 });
 
                 println!("{:?}", request);
@@ -193,6 +216,7 @@ impl Handler for Server {
                 self.broadcast_num_interactions_per_item_diffs();
                 self.broadcast_cooccurrences_diffs();
                 self.broadcast_similarities_diffs();
+                self.broadcast_recommendation_diffs();
             },
             Err(e) => println!("Error parsing request:\n{:?}\n\n{:?}\n", &message_as_string, e),
         }
