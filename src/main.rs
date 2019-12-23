@@ -107,9 +107,8 @@ fn demo(worker: Rc<RefCell<Worker<Thread>>>) {
             .join_map(
                 &bidirectional_similarities,
                 |_history_item, query, (other_item, similarity)| {
-                    ((*query, *other_item), *similarity)
+                    (*query, (*other_item, *similarity))
             })
-            .map(|((query, item), similarity)| (query, (item, similarity)))
             .reduce(|_query, items_with_similarities, output| {
 
                 let mut similarities_per_item: HashMap<u32, isize> = HashMap::new();

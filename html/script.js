@@ -80,11 +80,11 @@ function addInteraction(user, item) {
     if (document.getElementById(`interactions_${user}`) == null) {
         var row = `
             <div class="row" id="interactions_${user}">
-                <div id="interactions_${user}_0" class="col-md-2">-</div>
-                <div id="interactions_${user}_1" class="col-md-2">-</div>
-                <div id="interactions_${user}_2" class="col-md-2">-</div>
-                <div id="interactions_${user}_3" class="col-md-2">-</div>
-                <div id="interactions_${user}_4" class="col-md-2">-</div>
+                <div id="interactions_${user}_0" class="col-md-2 text-center">-</div>
+                <div id="interactions_${user}_1" class="col-md-2 text-center">-</div>
+                <div id="interactions_${user}_2" class="col-md-2 text-center">-</div>
+                <div id="interactions_${user}_3" class="col-md-2 text-center">-</div>
+                <div id="interactions_${user}_4" class="col-md-2 text-center">-</div>
                 <div class="col-md-2">
                     <button class="btn btn-xs btn-default" onclick="javascript:forget(${user});">forget</button>
                 </div>
@@ -93,11 +93,24 @@ function addInteraction(user, item) {
     }
 
     document.getElementById(`interactions_${user}_${item}`).innerHTML = "✔";
+
+    blink(`#interactions_${user}_${item}`);
 }
+
+function blink(elem) {
+
+   var duration = 800;
+
+    $(elem)
+        .fadeOut(duration).fadeIn(duration)
+        .fadeOut(duration).fadeIn(duration)
+        .fadeOut(duration).fadeIn(duration);
+}
+
 
 socket.onmessage = function (event) {
   var messages = document.getElementById("messages");
-  messages.append(event.data + "\n");
+  messages.innerHTML = event.data + "\n" + messages.innerHTML;
 
   var change = JSON.parse(event.data);
 
@@ -111,6 +124,7 @@ socket.onmessage = function (event) {
     var item = change['item'];
     var count = change['count'];
     document.getElementById("interactions_per_item_" + item).innerHTML = count;
+    blink(`#interactions_per_item_${item}`);
   }
 
   if (change['data'] == 'cooccurrences_c' && change['change'] == -1) {
@@ -128,6 +142,8 @@ socket.onmessage = function (event) {
     var count = change['num_cooccurrences'];
     document.getElementById("cooccurrences_" + item_a + "_" + item_b).innerHTML = count;
     document.getElementById("cooccurrences_" + item_b + "_" + item_a).innerHTML = count;
+    blink(`#cooccurrences_${item_a}_${item_b}`);
+    blink(`#cooccurrences_${item_b}_${item_a}`);
   }
 
   if (change['data'] == 'similarities_s' && change['change'] == -1) {
@@ -144,6 +160,8 @@ socket.onmessage = function (event) {
     var similarity = change['similarity'];
     document.getElementById("similarities_" + item_a + "_" + item_b).innerHTML = Number(similarity).toFixed(2);
     document.getElementById("similarities_" + item_b + "_" + item_a).innerHTML = Number(similarity).toFixed(2);
+    blink(`#similarities_${item_a}_${item_b}`);
+    blink(`#similarities_${item_b}_${item_a}`);
   }
 
   if (change['data'] == 'recommendations' && change['change'] == -1) {
@@ -163,7 +181,9 @@ socket.onmessage = function (event) {
         "https://m.media-amazon.com/images/M/MV5BMDdmZGU3NDQtY2E5My00ZTliLWIzOTUtMTY4ZGI1YjdiNjk3XkEyXkFqcGdeQXVyNTA4NzY1MzY@._V1_UX182_CR0,0,182,268_AL_.jpg"
     ];
 
-    document.getElementById("recommendation_" + query).innerHTML = `<img style="width:35px;" src="${images[item]}"/>`;
+    document.getElementById("recommendation_" + query).innerHTML = `<img class="query-image" src="${images[item]}"/>`;
+
+    blink(`#recommendation_${query}`);
   }
 
 };
