@@ -53,6 +53,13 @@ socket.onmessage = function (event) {
     document.getElementById("similarities_" + item_b + "_" + item_a).innerHTML = Number(similarity).toFixed(2);
   }
 
+  if (change['data'] == 'recommendations' && change['change'] == 1) {
+    var query = change['query'];
+    var item = change['item'];
+
+    document.getElementById("recommendation_" + query).innerHTML = item;
+  }
+
 };
 
 var form = document.getElementById("form");

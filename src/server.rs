@@ -34,7 +34,6 @@ pub struct Server {
     pub worker: Rc<RefCell<Worker<Thread>>>,
     pub input: Rc<RefCell<InputSession<usize, (u32, u32), isize>>>,
     pub probe: Rc<RefCell<ProbeHandle<usize>>>,
-    pub probe2: Rc<RefCell<ProbeHandle<usize>>>,
     pub shared_num_interactions_per_item_trace: SharedTrace<u32, isize>,
     pub shared_cooccurrences_trace: SharedTrace<(u32, u32), isize>,
     pub shared_similarities_trace: SharedTrace<(u32, u32), String>,
@@ -207,8 +206,7 @@ impl Handler for Server {
                 interactions_input.flush();
 
                 self.worker.borrow_mut().step_while(|| {
-                    self.probe.borrow_mut().less_than(interactions_input.time()) &&
-                    self.probe2.borrow_mut().less_than(interactions_input.time())
+                    self.probe.borrow_mut().less_than(interactions_input.time())
                 });
 
                 println!("{:?}", request);
@@ -279,7 +277,7 @@ fn collect_diffs<K, V, F>(
 //    });
 
     let (mut cursor, storage) = trace.borrow_mut().cursor();
-
+    
     while cursor.key_valid(&storage) {
         while cursor.val_valid(&storage) {
 
