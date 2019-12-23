@@ -1,6 +1,99 @@
-var initRequest = '{"change":"Add", "interactions":[[0,1], [0,2], [1,0], [1,1], [1,3], [2,1], [2,3]]}';
 
 var socket = new WebSocket("ws://" + window.location.host + "/ws");
+
+var maxUserIdSeen = -1;
+
+function initialize() {
+    var initRequest = '{"change":"Add", "interactions":[[0,0], [0,1], [0,2], [1,1], [1,2], [1,4], [2,1], [2,3], [2,4]]}';
+    socket.send(initRequest);
+    addInteraction(0, 0);
+    addInteraction(0, 1);
+    addInteraction(0, 2);
+    addInteraction(1, 1);
+    addInteraction(1, 2);
+    addInteraction(1, 4);
+    addInteraction(2, 3);
+    addInteraction(2, 4);
+}
+
+function forget(user) {
+    var items = [];
+
+    for (var item=0; item < 5; item++) {
+        if (document.getElementById(`interactions_${user}_${item}`).innerHTML == "✔") {
+            items.push(item);
+        }
+    }
+
+    var removeInteractions = [];
+
+    for (var i = 0; i < items.length; i++) {
+        removeInteractions.push([user, items[i]]);
+    }
+
+    var request = {};
+    request["change"] = "Remove";
+    request["interactions"] = removeInteractions;
+
+    socket.send(JSON.stringify(request));
+
+    var elem = document.getElementById(`interactions_${user}`);
+    elem.parentNode.removeChild(elem);
+}
+
+function newUser() {
+    var items = [];
+    var newInteractions = [];
+
+    for (var item=0; item < 5; item++) {
+        if (document.getElementById(`new_${item}`).checked) {
+            items.push(item);
+            document.getElementById(`new_${item}`).checked = false;
+        }
+    }
+
+    var userId = maxUserIdSeen + 1;
+
+    if (items.length == 0) {
+        alert("Select an item!");
+        return;
+    }
+
+    for (var i = 0; i < items.length; i++) {
+        addInteraction(userId, items[i]);
+        newInteractions.push([userId, items[i]]);
+    }
+
+    var request = {};
+    request["change"] = "Add";
+    request["interactions"] = newInteractions;
+
+    socket.send(JSON.stringify(request));
+}
+
+function addInteraction(user, item) {
+
+    if (user > maxUserIdSeen) {
+        maxUserIdSeen = user;
+    }
+
+    if (document.getElementById(`interactions_${user}`) == null) {
+        var row = `
+            <div class="row" id="interactions_${user}">
+                <div id="interactions_${user}_0" class="col-md-2">-</div>
+                <div id="interactions_${user}_1" class="col-md-2">-</div>
+                <div id="interactions_${user}_2" class="col-md-2">-</div>
+                <div id="interactions_${user}_3" class="col-md-2">-</div>
+                <div id="interactions_${user}_4" class="col-md-2">-</div>
+                <div class="col-md-2">
+                    <button class="btn btn-xs btn-default" onclick="javascript:forget(${user});">forget</button>
+                </div>
+            </div>`;
+        document.getElementById("interactions").innerHTML += row;
+    }
+
+    document.getElementById(`interactions_${user}_${item}`).innerHTML = "✔";
+}
 
 socket.onmessage = function (event) {
   var messages = document.getElementById("messages");
@@ -53,19 +146,24 @@ socket.onmessage = function (event) {
     document.getElementById("similarities_" + item_b + "_" + item_a).innerHTML = Number(similarity).toFixed(2);
   }
 
+  if (change['data'] == 'recommendations' && change['change'] == -1) {
+    var query = change['query'];
+    document.getElementById("recommendation_" + query).innerHTML = "";
+  }
+
   if (change['data'] == 'recommendations' && change['change'] == 1) {
     var query = change['query'];
     var item = change['item'];
 
-    document.getElementById("recommendation_" + query).innerHTML = item;
+    var images = [
+        "https://m.media-amazon.com/images/M/MV5BNDUxN2I5NDUtZjdlMC00NjlmLTg0OTQtNjk0NjAxZjFmZTUzXkEyXkFqcGdeQXVyMTQxNzMzNDI@._V1_UX182_CR0,0,182,268_AL_.jpg",
+        "https://m.media-amazon.com/images/M/MV5BNDUxN2I5NDUtZjdlMC00NjlmLTg0OTQtNjk0NjAxZjFmZTUzXkEyXkFqcGdeQXVyMTQxNzMzNDI@._V1_UX182_CR0,0,182,268_AL_.jpg",
+        "https://m.media-amazon.com/images/M/MV5BZDAwYTlhMDEtNTg0OS00NDY2LWJjOWItNWY3YTZkM2UxYzUzXkEyXkFqcGdeQXVyNTA4NzY1MzY@._V1_UY268_CR4,0,182,268_AL_.jpg",
+        "https://m.media-amazon.com/images/M/MV5BNGEwMTRmZTQtMDY4Ni00MTliLTk5ZmMtOWMxYWMyMTllMDg0L2ltYWdlL2ltYWdlXkEyXkFqcGdeQXVyNjc1NTYyMjg@._V1_UX182_CR0,0,182,268_AL_.jpg",
+        "https://m.media-amazon.com/images/M/MV5BMDdmZGU3NDQtY2E5My00ZTliLWIzOTUtMTY4ZGI1YjdiNjk3XkEyXkFqcGdeQXVyNTA4NzY1MzY@._V1_UX182_CR0,0,182,268_AL_.jpg"
+    ];
+
+    document.getElementById("recommendation_" + query).innerHTML = `<img style="width:35px;" src="${images[item]}"/>`;
   }
 
 };
-
-var form = document.getElementById("form");
-form.addEventListener('submit', function (event) {
-  event.preventDefault();
-  var input = document.getElementById("msg");
-  socket.send(input.value);
-  input.value = "";
-});

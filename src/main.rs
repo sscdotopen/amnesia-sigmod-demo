@@ -109,7 +109,6 @@ fn demo(worker: Rc<RefCell<Worker<Thread>>>) {
                 |_history_item, query, (other_item, similarity)| {
                     ((*query, *other_item), *similarity)
             })
-            //.antijoin(&queries_by_item)
             .map(|((query, item), similarity)| (query, (item, similarity)))
             .reduce(|_query, items_with_similarities, output| {
 
@@ -138,9 +137,16 @@ fn demo(worker: Rc<RefCell<Worker<Thread>>>) {
             arranged_jaccard_similarities.trace, arranged_recommendations.trace)
     });
 
-    query_input.insert((40000, 0));
+    // Edward Scissorhands + Titanic
     query_input.insert((40000, 1));
-    query_input.insert((50000, 3));
+    query_input.insert((40000, 4));
+
+    // The Godfather
+    query_input.insert((50000, 0));
+
+    // Leon the Professional
+    query_input.insert((60000, 2));
+
     query_input.advance_to(1);
     query_input.flush();
     query_input.close();

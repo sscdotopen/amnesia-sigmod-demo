@@ -1,3 +1,9 @@
+.interactions-cell {
+    float: left;
+    width: 40px;
+    height: 40px;
+}
+
 .num-interactions-cell {
     float: left;
     width: 40px;

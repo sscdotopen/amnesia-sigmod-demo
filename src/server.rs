@@ -174,7 +174,7 @@ impl Server {
 
 
 impl Handler for Server {
-    // Handle messages received in the websocket (in this case, only on /ws)
+
     fn on_message(&mut self, msg: Message) -> Result<()> {
 
         // We assume we always get valid utf-8
@@ -208,8 +208,6 @@ impl Handler for Server {
                 self.worker.borrow_mut().step_while(|| {
                     self.probe.borrow_mut().less_than(interactions_input.time())
                 });
-
-                println!("{:?}", request);
 
                 self.broadcast_num_interactions_per_item_diffs();
                 self.broadcast_cooccurrences_diffs();
