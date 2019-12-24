@@ -4,6 +4,7 @@ extern crate amnesia_sigmod_demo;
 
 use std::cell::RefCell;
 use std::rc::Rc;
+use std::iter;
 
 use timely::communication::allocator::thread::Thread;
 use timely::worker::Worker;
@@ -78,7 +79,7 @@ fn demo(worker: Rc<RefCell<Worker<Thread>>>) {
                     Some(((item_a, item_b), (num_cooc, occ_a, occ_b)))
                 },
             )
-            // Compute Jaccard similarty, has to be done in a map due to the lack of a
+            // Compute Jaccard similarity, has to be done in a map due to the lack of a
             // total order for f64 (which seems to break the consolidation in join)
             .map(|((item_a, item_b), (num_cooc, occ_a, occ_b))| {
                 let jaccard = num_cooc as f64 / (occ_a + occ_b - num_cooc) as f64;
@@ -91,13 +92,10 @@ fn demo(worker: Rc<RefCell<Worker<Thread>>>) {
 
         let bidirectional_similarities = jaccard_similarities
             .flat_map(|((item_a, item_b), similarity_str)| {
-                let similarity = similarity_str.parse::<f64>().unwrap();
-                let similarity2 = (similarity * 10000_f64) as u64;
+                let similarity = (similarity_str.parse::<f64>().unwrap() * 10000_f64) as u64;
 
-                vec![
-                    (item_a, (item_b, similarity2)),
-                    (item_b, (item_a, similarity2))
-                ]
+                iter::once((item_a, (item_b, similarity)))
+                    .chain(iter::once((item_b, (item_a, similarity))))
             });
 
         let queries_by_item = queries
