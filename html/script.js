@@ -12,6 +12,7 @@ function initialize() {
     addInteraction(1, 1);
     addInteraction(1, 2);
     addInteraction(1, 4);
+    addInteraction(2, 1);
     addInteraction(2, 3);
     addInteraction(2, 4);
 }
@@ -80,13 +81,13 @@ function addInteraction(user, item) {
     if (document.getElementById(`interactions_${user}`) == null) {
         var row = `
             <div class="row" id="interactions_${user}">
-                <div id="interactions_${user}_0" class="col-md-2 text-center">-</div>
-                <div id="interactions_${user}_1" class="col-md-2 text-center">-</div>
-                <div id="interactions_${user}_2" class="col-md-2 text-center">-</div>
-                <div id="interactions_${user}_3" class="col-md-2 text-center">-</div>
-                <div id="interactions_${user}_4" class="col-md-2 text-center">-</div>
+                <div id="interactions_${user}_0" class="col-md-2 text-center interactions-cell">-</div>
+                <div id="interactions_${user}_1" class="col-md-2 text-center interactions-cell">-</div>
+                <div id="interactions_${user}_2" class="col-md-2 text-center interactions-cell">-</div>
+                <div id="interactions_${user}_3" class="col-md-2 text-center interactions-cell">-</div>
+                <div id="interactions_${user}_4" class="col-md-2 text-center interactions-cell">-</div>
                 <div class="col-md-2">
-                    <button class="btn btn-xs btn-default" onclick="javascript:forget(${user});">forget</button>
+                    <button class="btn btn-xs btn-warning" onclick="javascript:forget(${user});">forget</button>
                 </div>
             </div>`;
         document.getElementById("interactions").innerHTML += row;
@@ -99,12 +100,11 @@ function addInteraction(user, item) {
 
 function blink(elem) {
 
-   var duration = 800;
+   var duration = 1500;
 
     $(elem)
-        .fadeOut(duration).fadeIn(duration)
-        .fadeOut(duration).fadeIn(duration)
-        .fadeOut(duration).fadeIn(duration);
+     .animate({ 'font-weight': 'bold', 'font-size': '18px', 'color': '#d73a49' }, duration)
+     .animate({ 'font-weight': 'normal', 'font-size': '14px', 'color': '#c8c8c8' }, duration);
 }
 
 

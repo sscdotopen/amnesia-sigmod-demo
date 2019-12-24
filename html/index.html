@@ -8,12 +8,11 @@
     <link rel="stylesheet" type="text/css" href="style.css"/>
 
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
-    <!--link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous"-->
     <link rel="stylesheet" href="https://bootswatch.com/3/slate/bootstrap.min.css"/>
 
     <script src="https://code.jquery.com/jquery-2.2.4.min.js" integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" crossorigin="anonymous"></script>
-    <script src="http://code.jquery.com/color/jquery.color-2.2.4.js"></script>
-    <!--script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script-->
+    <script src="https://code.jquery.com/color/jquery.color-2.1.2.min.js"></script>
+
 </head>
 <body>
 
@@ -60,12 +59,12 @@
                 </div>
 
                 <div class="row">
-                    <div class="col-md-2 text-center"><input type="checkbox" id="new_0"/></div>
-                    <div class="col-md-2 text-center"><input type="checkbox" id="new_1"/></div>
-                    <div class="col-md-2 text-center"><input type="checkbox" id="new_2"/></div>
-                    <div class="col-md-2 text-center"><input type="checkbox" id="new_3"/></div>
-                    <div class="col-md-2 text-center"><input type="checkbox" id="new_4"/></div>
-                    <div class="col-md-2 text-center"><button class="btn btn-xs btn-default" onclick="javascript:newUser();">Add</button></div>
+                    <div class="col-md-2 text-center interactions-cell"><input type="checkbox" id="new_0"/></div>
+                    <div class="col-md-2 text-center interactions-cell"><input type="checkbox" id="new_1"/></div>
+                    <div class="col-md-2 text-center interactions-cell"><input type="checkbox" id="new_2"/></div>
+                    <div class="col-md-2 text-center interactions-cell"><input type="checkbox" id="new_3"/></div>
+                    <div class="col-md-2 text-center interactions-cell"><input type="checkbox" id="new_4"/></div>
+                    <div class="col-md-2 text-center interactions-cell"><button class="btn btn-xs btn-success" onclick="javascript:newUser();">Add</button></div>
                 </div>
 
                 <div id="interactions">
@@ -110,55 +109,55 @@
                     <div class="col-md-2">
                         <img class="preview-image" src="https://m.media-amazon.com/images/M/MV5BM2MyNjYxNmUtYTAwNi00MTYxLWJmNWYtYzZlODY3ZTk3OTFlXkEyXkFqcGdeQXVyNzkwMjQ5NzM@._V1_UY268_CR3,0,182,268_AL_.jpg"/>
                     </div>
-                    <div id="cooccurrences_0_0" class="col-md-2 text-center my-auto">-</div>
-                    <div id="cooccurrences_0_1" class="col-md-2 text-center">0</div>
-                    <div id="cooccurrences_0_2" class="col-md-2 text-center">0</div>
-                    <div id="cooccurrences_0_3" class="col-md-2 text-center">0</div>
-                    <div id="cooccurrences_0_4" class="col-md-2 text-center">0</div>
+                    <div id="cooccurrences_0_0" class="col-md-2 text-center matrix-cell">-</div>
+                    <div id="cooccurrences_0_1" class="col-md-2 text-center matrix-cell">0</div>
+                    <div id="cooccurrences_0_2" class="col-md-2 text-center matrix-cell">0</div>
+                    <div id="cooccurrences_0_3" class="col-md-2 text-center matrix-cell">0</div>
+                    <div id="cooccurrences_0_4" class="col-md-2 text-center matrix-cell">0</div>
                 </div>
 
                 <div class="row">
                     <div class="col-md-2">
                         <img class="preview-image" src="https://m.media-amazon.com/images/M/MV5BNDUxN2I5NDUtZjdlMC00NjlmLTg0OTQtNjk0NjAxZjFmZTUzXkEyXkFqcGdeQXVyMTQxNzMzNDI@._V1_UX182_CR0,0,182,268_AL_.jpg"/>
                     </div>
-                    <div id="cooccurrences_1_0" class="col-md-2 text-center">0</div>
-                    <div id="cooccurrences_1_1" class="col-md-2 text-center">-</div>
-                    <div id="cooccurrences_1_2" class="col-md-2 text-center">0</div>
-                    <div id="cooccurrences_1_3" class="col-md-2 text-center">0</div>
-                    <div id="cooccurrences_1_4" class="col-md-2 text-center">0</div>
+                    <div id="cooccurrences_1_0" class="col-md-2 text-center matrix-cell">0</div>
+                    <div id="cooccurrences_1_1" class="col-md-2 text-center matrix-cell">-</div>
+                    <div id="cooccurrences_1_2" class="col-md-2 text-center matrix-cell">0</div>
+                    <div id="cooccurrences_1_3" class="col-md-2 text-center matrix-cell">0</div>
+                    <div id="cooccurrences_1_4" class="col-md-2 text-center matrix-cell">0</div>
                 </div>
 
                 <div class="row">
                     <div class="col-md-2">
                         <img class="preview-image" src="https://m.media-amazon.com/images/M/MV5BZDAwYTlhMDEtNTg0OS00NDY2LWJjOWItNWY3YTZkM2UxYzUzXkEyXkFqcGdeQXVyNTA4NzY1MzY@._V1_UY268_CR4,0,182,268_AL_.jpg"/>
                     </div>
-                    <div id="cooccurrences_2_0" class="col-md-2 text-center">0</div>
-                    <div id="cooccurrences_2_1" class="col-md-2 text-center">0</div>
-                    <div id="cooccurrences_2_2" class="col-md-2 text-center">-</div>
-                    <div id="cooccurrences_2_3" class="col-md-2 text-center">0</div>
-                    <div id="cooccurrences_2_4" class="col-md-2 text-center">0</div>
+                    <div id="cooccurrences_2_0" class="col-md-2 text-center matrix-cell">0</div>
+                    <div id="cooccurrences_2_1" class="col-md-2 text-center matrix-cell">0</div>
+                    <div id="cooccurrences_2_2" class="col-md-2 text-center matrix-cell">-</div>
+                    <div id="cooccurrences_2_3" class="col-md-2 text-center matrix-cell">0</div>
+                    <div id="cooccurrences_2_4" class="col-md-2 text-center matrix-cell">0</div>
                 </div>
 
                 <div class="row">
                     <div class="col-md-2">
                         <img class="preview-image" src="https://m.media-amazon.com/images/M/MV5BNGEwMTRmZTQtMDY4Ni00MTliLTk5ZmMtOWMxYWMyMTllMDg0L2ltYWdlL2ltYWdlXkEyXkFqcGdeQXVyNjc1NTYyMjg@._V1_UX182_CR0,0,182,268_AL_.jpg"/>
                     </div>
-                    <div id="cooccurrences_3_0" class="col-md-2 text-center">0</div>
-                    <div id="cooccurrences_3_1" class="col-md-2 text-center">0</div>
-                    <div id="cooccurrences_3_2" class="col-md-2 text-center">0</div>
-                    <div id="cooccurrences_3_3" class="col-md-2 text-center">-</div>
-                    <div id="cooccurrences_3_4" class="col-md-2 text-center">0</div>
+                    <div id="cooccurrences_3_0" class="col-md-2 text-center matrix-cell">0</div>
+                    <div id="cooccurrences_3_1" class="col-md-2 text-center matrix-cell">0</div>
+                    <div id="cooccurrences_3_2" class="col-md-2 text-center matrix-cell">0</div>
+                    <div id="cooccurrences_3_3" class="col-md-2 text-center matrix-cell">-</div>
+                    <div id="cooccurrences_3_4" class="col-md-2 text-center matrix-cell">0</div>
                 </div>
 
                 <div class="row">
                     <div class="col-md-2">
                         <img class="preview-image" src="https://m.media-amazon.com/images/M/MV5BMDdmZGU3NDQtY2E5My00ZTliLWIzOTUtMTY4ZGI1YjdiNjk3XkEyXkFqcGdeQXVyNTA4NzY1MzY@._V1_UX182_CR0,0,182,268_AL_.jpg"/>
                     </div>
-                    <div id="cooccurrences_4_0" class="col-md-2 text-center">0</div>
-                    <div id="cooccurrences_4_1" class="col-md-2 text-center">0</div>
-                    <div id="cooccurrences_4_2" class="col-md-2 text-center">0</div>
-                    <div id="cooccurrences_4_3" class="col-md-2 text-center">-</div>
-                    <div id="cooccurrences_4_4" class="col-md-2 text-center">0</div>
+                    <div id="cooccurrences_4_0" class="col-md-2 text-center matrix-cell">0</div>
+                    <div id="cooccurrences_4_1" class="col-md-2 text-center matrix-cell">0</div>
+                    <div id="cooccurrences_4_2" class="col-md-2 text-center matrix-cell">0</div>
+                    <div id="cooccurrences_4_3" class="col-md-2 text-center matrix-cell">-</div>
+                    <div id="cooccurrences_4_4" class="col-md-2 text-center matrix-cell">0</div>
                 </div>
 
             </div>
@@ -238,55 +237,55 @@
                     <div class="col-md-2">
                         <img class="preview-image" src="https://m.media-amazon.com/images/M/MV5BM2MyNjYxNmUtYTAwNi00MTYxLWJmNWYtYzZlODY3ZTk3OTFlXkEyXkFqcGdeQXVyNzkwMjQ5NzM@._V1_UY268_CR3,0,182,268_AL_.jpg"/>
                     </div>
-                    <div id="similarities_0_0" class="col-md-2 text-center">-</div>
-                    <div id="similarities_0_1" class="col-md-2 text-center">0.0</div>
-                    <div id="similarities_0_2" class="col-md-2 text-center">0.0</div>
-                    <div id="similarities_0_3" class="col-md-2 text-center">0.0</div>
-                    <div id="similarities_0_4" class="col-md-2 text-center">0.0</div>
+                    <div id="similarities_0_0" class="col-md-2 text-center matrix-cell">-</div>
+                    <div id="similarities_0_1" class="col-md-2 text-center matrix-cell">0.0</div>
+                    <div id="similarities_0_2" class="col-md-2 text-center matrix-cell">0.0</div>
+                    <div id="similarities_0_3" class="col-md-2 text-center matrix-cell">0.0</div>
+                    <div id="similarities_0_4" class="col-md-2 text-center matrix-cell">0.0</div>
                 </div>
 
                 <div class="row">
                     <div class="col-md-2">
                         <img class="preview-image" src="https://m.media-amazon.com/images/M/MV5BNDUxN2I5NDUtZjdlMC00NjlmLTg0OTQtNjk0NjAxZjFmZTUzXkEyXkFqcGdeQXVyMTQxNzMzNDI@._V1_UX182_CR0,0,182,268_AL_.jpg"/>
                     </div>
-                    <div id="similarities_1_0" class="col-md-2 text-center">0.0</div>
-                    <div id="similarities_1_1" class="col-md-2 text-center">-</div>
-                    <div id="similarities_1_2" class="col-md-2 text-center">0.0</div>
-                    <div id="similarities_1_3" class="col-md-2 text-center">0.0</div>
-                    <div id="similarities_1_4" class="col-md-2 text-center">0.0</div>
+                    <div id="similarities_1_0" class="col-md-2 text-center matrix-cell">0.0</div>
+                    <div id="similarities_1_1" class="col-md-2 text-center matrix-cell">-</div>
+                    <div id="similarities_1_2" class="col-md-2 text-center matrix-cell">0.0</div>
+                    <div id="similarities_1_3" class="col-md-2 text-center matrix-cell">0.0</div>
+                    <div id="similarities_1_4" class="col-md-2 text-center matrix-cell">0.0</div>
                 </div>
 
                 <div class="row">
                     <div class="col-md-2">
                         <img class="preview-image" src="https://m.media-amazon.com/images/M/MV5BZDAwYTlhMDEtNTg0OS00NDY2LWJjOWItNWY3YTZkM2UxYzUzXkEyXkFqcGdeQXVyNTA4NzY1MzY@._V1_UY268_CR4,0,182,268_AL_.jpg"/>
                     </div>
-                    <div id="similarities_2_0" class="col-md-2 text-center">0.0</div>
-                    <div id="similarities_2_1" class="col-md-2 text-center">0.0</div>
-                    <div id="similarities_2_2" class="col-md-2 text-center">-</div>
-                    <div id="similarities_2_3" class="col-md-2 text-center">0.0</div>
-                    <div id="similarities_2_4" class="col-md-2 text-center">0.0</div>
+                    <div id="similarities_2_0" class="col-md-2 text-center matrix-cell">0.0</div>
+                    <div id="similarities_2_1" class="col-md-2 text-center matrix-cell">0.0</div>
+                    <div id="similarities_2_2" class="col-md-2 text-center matrix-cell">-</div>
+                    <div id="similarities_2_3" class="col-md-2 text-center matrix-cell">0.0</div>
+                    <div id="similarities_2_4" class="col-md-2 text-center matrix-cell">0.0</div>
                 </div>
 
                 <div class="row">
                     <div class="col-md-2">
                         <img class="preview-image" src="https://m.media-amazon.com/images/M/MV5BNGEwMTRmZTQtMDY4Ni00MTliLTk5ZmMtOWMxYWMyMTllMDg0L2ltYWdlL2ltYWdlXkEyXkFqcGdeQXVyNjc1NTYyMjg@._V1_UX182_CR0,0,182,268_AL_.jpg"/>
                     </div>
-                    <div id="similarities_3_0" class="col-md-2 text-center">0.0</div>
-                    <div id="similarities_3_1" class="col-md-2 text-center">0.0</div>
-                    <div id="similarities_3_2" class="col-md-2 text-center">0.0</div>
-                    <div id="similarities_3_3" class="col-md-2 text-center">-</div>
-                    <div id="similarities_3_4" class="col-md-2 text-center">0.0</div>
+                    <div id="similarities_3_0" class="col-md-2 text-center matrix-cell">0.0</div>
+                    <div id="similarities_3_1" class="col-md-2 text-center matrix-cell">0.0</div>
+                    <div id="similarities_3_2" class="col-md-2 text-center matrix-cell">0.0</div>
+                    <div id="similarities_3_3" class="col-md-2 text-center matrix-cell">-</div>
+                    <div id="similarities_3_4" class="col-md-2 text-center matrix-cell">0.0</div>
                 </div>
 
                 <div class="row">
                     <div class="col-md-2">
                         <img class="preview-image" src="https://m.media-amazon.com/images/M/MV5BMDdmZGU3NDQtY2E5My00ZTliLWIzOTUtMTY4ZGI1YjdiNjk3XkEyXkFqcGdeQXVyNTA4NzY1MzY@._V1_UX182_CR0,0,182,268_AL_.jpg"/>
                     </div>
-                    <div id="similarities_4_0" class="col-md-2 text-center">0.0</div>
-                    <div id="similarities_4_1" class="col-md-2 text-center">0.0</div>
-                    <div id="similarities_4_2" class="col-md-2 text-center">0.0</div>
-                    <div id="similarities_4_3" class="col-md-2 text-center">-</div>
-                    <div id="similarities_4_4" class="col-md-2 text-center">0.0</div>
+                    <div id="similarities_4_0" class="col-md-2 text-center matrix-cell">0.0</div>
+                    <div id="similarities_4_1" class="col-md-2 text-center matrix-cell">0.0</div>
+                    <div id="similarities_4_2" class="col-md-2 text-center matrix-cell">0.0</div>
+                    <div id="similarities_4_3" class="col-md-2 text-center matrix-cell">-</div>
+                    <div id="similarities_4_4" class="col-md-2 text-center matrix-cell">0.0</div>
                 </div>
 
             </div>
@@ -304,22 +303,22 @@
                     <div class="col-md-2">
                         <img class="query-image" src="https://m.media-amazon.com/images/M/MV5BMDdmZGU3NDQtY2E5My00ZTliLWIzOTUtMTY4ZGI1YjdiNjk3XkEyXkFqcGdeQXVyNTA4NzY1MzY@._V1_UX182_CR0,0,182,268_AL_.jpg"/>
                     </div>
-                    <div class="col-md-2">&raquo;</div>
-                    <div class="col-md-2"><div id="recommendation_40000">-</div></div>
+                    <div class="col-md-2 query-arrow">&rarr;</div>
+                    <div class="col-md-2"><div id="recommendation_40000"></div></div>
                 </div>
                 <div class="row">
                     <div class="col-md-2">Q2</div>
                     <div class="col-md-2"><img class="query-image" src="https://m.media-amazon.com/images/M/MV5BM2MyNjYxNmUtYTAwNi00MTYxLWJmNWYtYzZlODY3ZTk3OTFlXkEyXkFqcGdeQXVyNzkwMjQ5NzM@._V1_UY268_CR3,0,182,268_AL_.jpg"/></div>
                     <div class="col-md-2"></div>
-                    <div class="col-md-2">&raquo;</div>
-                    <div class="col-md-2"><div id="recommendation_50000">-</div></div>
+                    <div class="col-md-2 query-arrow">&rarr;</div>
+                    <div class="col-md-2"><div id="recommendation_50000"></div></div>
                 </div>
                 <div class="row">
                     <div class="col-md-2">Q3</div>
                     <div class="col-md-2"><img class="query-image" src="https://m.media-amazon.com/images/M/MV5BZDAwYTlhMDEtNTg0OS00NDY2LWJjOWItNWY3YTZkM2UxYzUzXkEyXkFqcGdeQXVyNTA4NzY1MzY@._V1_UY268_CR4,0,182,268_AL_.jpg"/></div>
                     <div class="col-md-2"></div>
-                    <div class="col-md-2">&raquo;</div>
-                    <div class="col-md-2"><div id="recommendation_60000">-</div></div>
+                    <div class="col-md-2 query-arrow">&rarr;</div>
+                    <div class="col-md-2"><div id="recommendation_60000"></div></div>
                 </div>
 
 

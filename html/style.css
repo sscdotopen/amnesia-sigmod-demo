@@ -7,3 +7,18 @@
     width: 50px;
     padding-bottom: 8px;
 }
+
+.matrix-cell {
+    padding-top: 15px;
+}
+
+.interactions-cell {
+    padding-top: 5px;
+    padding-bottom: 5px;
+}
+
+.query-arrow {
+    font-size: 20px;
+    font-weight: bold;
+    padding-top: 15px;
+}

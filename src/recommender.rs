@@ -1,23 +1,21 @@
 extern crate timely;
 
-use std::cell::RefCell;
-use std::rc::Rc;
 use std::iter;
 use std::collections::HashMap;
 
 use timely::communication::allocator::thread::Thread;
 use timely::dataflow::operators::probe::Handle;
 use timely::worker::Worker;
+use timely::dataflow::operators::Probe;
+use timely::dataflow::ProbeHandle;
 
 use differential_dataflow::input::InputSession;
+use differential_dataflow::operators::arrange::ArrangeByKey;
+use differential_dataflow::operators::join::JoinCore;
+use differential_dataflow::operators::{Join, CountTotal, Count, Reduce};
 
 use crate::types::Trace;
 
-use differential_dataflow::operators::arrange::ArrangeByKey;
-use timely::dataflow::operators::Probe;
-use timely::dataflow::ProbeHandle;
-use differential_dataflow::operators::join::JoinCore;
-use differential_dataflow::operators::{Join, CountTotal, Count, Reduce};
 
 pub fn dataflow_for_recommender(
     mut worker: Worker<Thread>

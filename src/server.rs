@@ -1,30 +1,28 @@
 extern crate ws;
 extern crate serde_json;
 
-use timely::dataflow::ProbeHandle;
-
-use differential_dataflow::input::InputSession;
-use ws::{Handler, Message, Request, Response, Result, Sender};
-use differential_dataflow::operators::arrange::TraceAgent;
-use differential_dataflow::trace::implementations::spine_fueled::Spine;
-use differential_dataflow::trace::implementations::ord::OrdValBatch;
-use timely::communication::allocator::thread::Thread;
-use timely::worker::Worker;
-use differential_dataflow::trace::{Cursor, TraceReader};
-
 use std::fs::File;
 use std::io::Read;
-
 use std::cell::RefCell;
 use std::rc::Rc;
 use std::fmt::Debug;
+use std::cmp::Ordering;
+
+use timely::dataflow::ProbeHandle;
+use timely::communication::allocator::thread::Thread;
+use timely::worker::Worker;
+
+use differential_dataflow::input::InputSession;
+use differential_dataflow::trace::{Cursor, TraceReader};
+
+use ws::{Handler, Message, Request, Response, Result, Sender};
 
 use serde_json::json;
 use serde_json::Result as SerdeResult;
 
 use crate::requests::{Change, ChangeRequest};
 use crate::types::Trace;
-use std::cmp::Ordering;
+
 
 pub struct Server {
     current_step: usize,
@@ -109,7 +107,10 @@ impl Server {
     fn broadcast_in_order(&self, mut changes: Vec<ChangeMessage>) {
         changes.sort();
         changes.into_iter()
-            .for_each(|change| self.broadcast(change.message));
+            .for_each(|change| {
+                println!("\t{}", change.message.as_text().unwrap());
+                self.broadcast(change.message)
+            });
     }
 
     fn broadcast_num_interactions_per_item_diffs(&self) {
