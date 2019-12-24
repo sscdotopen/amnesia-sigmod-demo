@@ -31,9 +31,9 @@ type SharedTrace<K, V> = Rc<RefCell<Trace<K, V>>>;
 pub struct Server {
     pub current_step: usize,
     pub out: Sender,
-    pub worker: Rc<RefCell<Worker<Thread>>>,
+    pub worker: Worker<Thread>,
     pub input: Rc<RefCell<InputSession<usize, (u32, u32), isize>>>,
-    pub probe: Rc<RefCell<ProbeHandle<usize>>>,
+    pub probe: ProbeHandle<usize>,
     pub shared_num_interactions_per_item_trace: SharedTrace<u32, isize>,
     pub shared_cooccurrences_trace: SharedTrace<(u32, u32), isize>,
     pub shared_similarities_trace: SharedTrace<(u32, u32), String>,
@@ -205,9 +205,10 @@ impl Handler for Server {
                 interactions_input.advance_to(self.current_step);
                 interactions_input.flush();
 
-                self.worker.borrow_mut().step_while(|| {
-                    self.probe.borrow_mut().less_than(interactions_input.time())
-                });
+                let worker = &mut self.worker;
+                let probe = &self.probe;
+
+                worker.step_while(|| probe.less_than(interactions_input.time()));
 
                 self.broadcast_num_interactions_per_item_diffs();
                 self.broadcast_cooccurrences_diffs();

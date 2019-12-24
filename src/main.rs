@@ -23,23 +23,23 @@ use std::collections::HashMap;
 
 fn main() {
     let alloc = Thread::new();
-    let worker = Rc::new(RefCell::new(timely::worker::Worker::new(alloc)));
+    let mut worker = timely::worker::Worker::new(alloc);
 
-    demo(Rc::clone(&worker));
+    demo(worker.clone());
 
-    while worker.borrow_mut().step_or_park(None) { }
+    while worker.step_or_park(None) { }
 }
 
-fn demo(worker: Rc<RefCell<Worker<Thread>>>) {
+fn demo(mut worker: Worker<Thread>) {
 
     let mut interactions_input: InputSession<usize, (u32, u32), isize> = InputSession::new();
     let mut query_input: InputSession<usize, (u32, u32), isize> = InputSession::new();
 
-    let mut the_probe = timely::dataflow::operators::probe::Handle::new();
+    let mut probe = timely::dataflow::operators::probe::Handle::new();
 
     let (num_interactions_per_item_trace, cooccurrences_trace,
         jaccard_similarities_trace, recommendations_trace) =
-        worker.borrow_mut().dataflow(|scope| {
+        worker.dataflow(|scope| {
 
         let interactions = interactions_input.to_collection(scope);
 
@@ -127,7 +127,7 @@ fn demo(worker: Rc<RefCell<Worker<Thread>>>) {
             let arranged_recommendations = recommendations
                 .arrange_by_key();
 
-            arranged_recommendations.stream.probe_with(&mut the_probe);
+            arranged_recommendations.stream.probe_with(&mut probe);
 
 
         (arranged_num_interactions_per_item.trace, arranged_cooccurrences.trace,
@@ -150,7 +150,6 @@ fn demo(worker: Rc<RefCell<Worker<Thread>>>) {
 
 
     let input = Rc::new(RefCell::new(interactions_input));
-    let probe = Rc::new(RefCell::new(the_probe));
     let shared_num_interactions_per_item_trace =
         Rc::new(RefCell::new(num_interactions_per_item_trace));
     let shared_cooccurrences_trace = Rc::new(RefCell::new(cooccurrences_trace));
@@ -161,9 +160,9 @@ fn demo(worker: Rc<RefCell<Worker<Thread>>>) {
         Server {
             current_step: 0,
             out,
-            worker: Rc::clone(&worker),
+            worker: worker.clone(),
             input: Rc::clone(&input),
-            probe: Rc::clone(&probe),
+            probe: probe.clone(),
             shared_num_interactions_per_item_trace: Rc::clone(&shared_num_interactions_per_item_trace),
             shared_cooccurrences_trace: Rc::clone(&shared_cooccurrences_trace),
             shared_similarities_trace: Rc::clone(&shared_similarities_trace),
