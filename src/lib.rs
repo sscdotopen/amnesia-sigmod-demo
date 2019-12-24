@@ -6,3 +6,5 @@ extern crate serde_json;
 
 pub mod server;
 pub mod requests;
+pub mod recommender;
+pub mod types;

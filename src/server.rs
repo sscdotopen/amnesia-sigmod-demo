@@ -23,21 +23,19 @@ use serde_json::json;
 use serde_json::Result as SerdeResult;
 
 use crate::requests::{Change, ChangeRequest};
+use crate::types::Trace;
 use std::cmp::Ordering;
 
-type Trace<K, V> = TraceAgent<Spine<K, V, usize, isize, Rc<OrdValBatch<K, V, usize, isize>>>>;
-type SharedTrace<K, V> = Rc<RefCell<Trace<K, V>>>;
-
 pub struct Server {
-    pub current_step: usize,
-    pub out: Sender,
-    pub worker: Worker<Thread>,
-    pub input: Rc<RefCell<InputSession<usize, (u32, u32), isize>>>,
-    pub probe: ProbeHandle<usize>,
-    pub shared_num_interactions_per_item_trace: SharedTrace<u32, isize>,
-    pub shared_cooccurrences_trace: SharedTrace<(u32, u32), isize>,
-    pub shared_similarities_trace: SharedTrace<(u32, u32), String>,
-    pub shared_recommendations_trace : SharedTrace<u32, u32>,
+    current_step: usize,
+    out: Sender,
+    worker: Worker<Thread>,
+    input: Rc<RefCell<InputSession<usize, (u32, u32), isize>>>,
+    probe: ProbeHandle<usize>,
+    num_interactions_per_item_trace: Trace<u32, isize>,
+    cooccurrences_trace: Trace<(u32, u32), isize>,
+    similarities_trace: Trace<(u32, u32), String>,
+    recommendations_trace : Trace<u32, u32>,
 }
 
 fn read_local(file: &str) -> Vec<u8> {
@@ -75,6 +73,31 @@ impl Ord for ChangeMessage {
 
 impl Server {
 
+    pub fn new(
+        current_step: usize,
+        out: Sender,
+        worker: Worker<Thread>,
+        input: Rc<RefCell<InputSession<usize, (u32, u32), isize>>>,
+        probe: ProbeHandle<usize>,
+        num_interactions_per_item_trace: Trace<u32, isize>,
+        cooccurrences_trace: Trace<(u32, u32), isize>,
+        similarities_trace: Trace<(u32, u32), String>,
+        recommendations_trace : Trace<u32, u32>,
+    ) -> Self {
+
+        Server {
+            current_step,
+            out,
+            worker,
+            input,
+            probe,
+            num_interactions_per_item_trace,
+            cooccurrences_trace,
+            similarities_trace,
+            recommendations_trace
+        }
+    }
+
     fn broadcast(&self, message: Message) {
         self.out.broadcast(message).expect("Unable to send message");
     }
@@ -91,7 +114,7 @@ impl Server {
 
     fn broadcast_num_interactions_per_item_diffs(&self) {
         let changes = collect_diffs(
-            Rc::clone(&self.shared_num_interactions_per_item_trace),
+            self.num_interactions_per_item_trace.clone(),
             self.last_update_time(),
             |item, count, time, change| {
 
@@ -111,7 +134,7 @@ impl Server {
 
     fn broadcast_cooccurrences_diffs(&self) {
         let changes = collect_diffs(
-            Rc::clone(&self.shared_cooccurrences_trace),
+            self.cooccurrences_trace.clone(),
             self.last_update_time(),
             |(item_a, item_b), num_cooccurrences, time, change| {
 
@@ -132,7 +155,7 @@ impl Server {
 
     fn broadcast_similarities_diffs(&self) {
         let changes = collect_diffs(
-            Rc::clone(&self.shared_similarities_trace),
+            self.similarities_trace.clone(),
             self.last_update_time(),
             |(item_a, item_b), similarity, time, change| {
 
@@ -153,7 +176,7 @@ impl Server {
 
     fn broadcast_recommendation_diffs(&self) {
         let changes = collect_diffs(
-            Rc::clone(&self.shared_recommendations_trace),
+            self.recommendations_trace.clone(),
             self.last_update_time(),
             |query, item, time, change| {
 
@@ -232,11 +255,8 @@ impl Handler for Server {
     }
 }
 
-
-
-
 fn collect_diffs<K, V, F>(
-    trace: SharedTrace<K, V>,
+    mut trace: Trace<K, V>,
     time_of_interest: usize,
     logic: F,
 ) -> Vec<ChangeMessage>
@@ -275,8 +295,8 @@ fn collect_diffs<K, V, F>(
 //        }
 //    });
 
-    let (mut cursor, storage) = trace.borrow_mut().cursor();
-    
+    let (mut cursor, storage) = trace.cursor();
+
     while cursor.key_valid(&storage) {
         while cursor.val_valid(&storage) {
 
