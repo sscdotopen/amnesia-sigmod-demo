@@ -100,7 +100,7 @@ function addInteraction(user, item) {
 
 function blink(elem) {
 
-   var duration = 1500;
+   var duration = 1200;
 
     $(elem)
      .animate({ 'font-weight': 'bold', 'font-size': '18px', 'color': '#d73a49' }, duration)
