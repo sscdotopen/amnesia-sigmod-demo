@@ -256,6 +256,8 @@ impl Handler for Server {
     }
 }
 
+use differential_dataflow::trace::BatchReader;
+
 fn collect_diffs<K, V, F>(
     mut trace: Trace<K, V>,
     time_of_interest: usize,
@@ -267,53 +269,32 @@ fn collect_diffs<K, V, F>(
 {
     let mut messages = Vec::new();
 
-//    let (_, storage) = trace.borrow_mut().cursor();
-//
-//    // We have a simple case where we only need to look at a single batch
-//    trace.borrow_mut().map_batches(|batch| {
-//        if batch.lower().iter().find(|t| *(*t) == time_of_interest) != None {
-//            println!("{:?}", batch.description());
-//
-//            let mut cursor = batch.cursor();
-//
-//
-//            while cursor.key_valid(&storage) {
-//                while cursor.val_valid(&storage) {
-//
-//                    let key = cursor.key(&storage);
-//                    let value = cursor.val(&storage);
-//
-//                    cursor.map_times(&storage, |time, diff| {
-//                        if *time == time_of_interest {
-//                            messages.push(logic(&key, &value, *time, *diff));
-//                        }
-//                    });
-//
-//                    cursor.step_val(&storage);
-//                }
-//                cursor.step_key(&storage);
-//            }
-//        }
-//    });
+    trace.map_batches(|batch| {
+        if batch.lower().iter().find(|t| *(*t) == time_of_interest) != None {
 
-    let (mut cursor, storage) = trace.cursor();
+            let mut cursor = batch.cursor();
 
-    while cursor.key_valid(&storage) {
-        while cursor.val_valid(&storage) {
+            while cursor.key_valid(&batch) {
+                while cursor.val_valid(&batch) {
 
-            let key = cursor.key(&storage);
-            let value = cursor.val(&storage);
+                    let key = cursor.key(&batch);
+                    let value = cursor.val(&batch);
 
-            cursor.map_times(&storage, |time, diff| {
-                if *time == time_of_interest {
-                    messages.push(logic(&key, &value, *time, *diff));
+                    cursor.map_times(&batch, |time, diff| {
+                        if *time == time_of_interest {
+                            messages.push(logic(&key, &value, *time, *diff));
+                        }
+                    });
+
+                    cursor.step_val(&batch);
                 }
-            });
-
-            cursor.step_val(&storage);
+                cursor.step_key(&batch);
+            }
         }
-        cursor.step_key(&storage);
-    }
+    });
+
+    trace.distinguish_since(&[]);
+    trace.advance_by(&[time_of_interest]);
 
     messages
 }

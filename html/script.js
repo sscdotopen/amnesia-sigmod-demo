@@ -100,13 +100,21 @@ function addInteraction(user, item) {
 
 function blink(elem) {
 
-   var duration = 1200;
+    var duration = 1200;
 
     $(elem)
      .animate({ 'font-weight': 'bold', 'font-size': '18px', 'color': '#d73a49' }, duration)
      .animate({ 'font-weight': 'normal', 'font-size': '14px', 'color': '#c8c8c8' }, duration);
 }
 
+function fade(elem) {
+
+    var duration = 600;
+
+    $(elem)
+    .fadeOut(duration).fadeIn(duration)
+    .fadeOut(duration).fadeIn(duration);
+}
 
 socket.onmessage = function (event) {
   var messages = document.getElementById("messages");
@@ -183,7 +191,7 @@ socket.onmessage = function (event) {
 
     document.getElementById("recommendation_" + query).innerHTML = `<img class="query-image" src="${images[item]}"/>`;
 
-    blink(`#recommendation_${query}`);
+    fade(`#recommendation_${query}`);
   }
 
 };
